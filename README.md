@@ -1,6 +1,13 @@
 # cifar100-fastapi-clean-architecture
 cifar100 image classification backend with fastapi **clean architecture**
 
+## Single-Image-File(JPG,PNG,JPEG ...) Classification
+![SINGLE-ONNX](https://github.com/user-attachments/assets/f1c35d48-5c1a-4fa0-8f36-dbc1d0785219)
+
+## Multiple-Files(ZIP) Classification
+![BATCH-TFLITE](https://github.com/user-attachments/assets/555876e0-4a10-4c5c-bdfe-3f70707ff74e)
+
+
 
 # Inference Server
 
