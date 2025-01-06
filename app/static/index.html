@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        input, button, select, textarea {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            width: 80%;
+        }
+        textarea {
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Classification</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file" accept=".zip, .jpg, .jpeg, .png" required />
+        <input type="text" name="user_id" placeholder="User ID" required />
+        <select name="inference_engine" required>
+            <option value="tflite">TFLite</option>
+            <option value="onnx">ONNX</option>
+        </select>
+        <button type="submit">Upload</button>
+    </form>
+    <p><strong>Response:</strong></p>
+    <textarea id="response" readonly></textarea>
+    <div id="trackingSection" style="display: none;">
+        <p><strong>Tracking Inference IDs:</strong></p>
+        <ul id="trackingList"></ul>
+    </div>
+    <script>
+        let inferenceIds = []; // Array to store inference IDs for batch or single
+
+        document.getElementById("uploadForm").onsubmit = async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a file.");
+                return;
+            }
+
+            const userId = e.target.user_id.value;
+            const inferenceEngine = e.target.inference_engine.value;
+
+            if (file.name.endsWith(".zip")) {
+                formData.append("zip_file", file);
+            } else if (file.name.endsWith(".jpg") || file.name.endsWith(".jpeg") || file.name.endsWith(".png")) {
+                formData.append("image", file);
+            } else {
+                alert("Only .zip, .jpg, .jpeg, or .png files are allowed.");
+                return;
+            }
+
+            formData.append("user_id", userId);
+            formData.append("inference_engine", inferenceEngine);
+
+            const endpoint = file.name.endsWith(".zip")
+                ? "/api/v1/images/batch-classify"
+                : "/api/v1/images/classify";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    body: formData,
+                });
+                const result = await response.json();
+                document.getElementById("response").textContent = JSON.stringify(result, null, 2);
+
+                if (result.data && result.data.inference_ids) {
+                    // Batch classify
+                    inferenceIds = result.data.inference_ids;
+                } else if (result.data && result.data.inference_id) {
+                    // Single classify
+                    inferenceIds = [result.data.inference_id];
+                }
+
+                if (inferenceIds.length > 0) {
+                    document.getElementById("trackingSection").style.display = "block";
+                    updateTrackingList();
+                }
+            } catch (error) {
+                document.getElementById("response").textContent = "Error: " + error.message;
+            }
+        };
+
+        function updateTrackingList() {
+            const trackingList = document.getElementById("trackingList");
+            trackingList.innerHTML = "";
+
+            inferenceIds.forEach((id) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = id;
+
+                const checkButton = document.createElement("button");
+                checkButton.textContent = "Check Status";
+                checkButton.onclick = async () => await checkStatus(id);
+
+                const resultTextarea = document.createElement("textarea");
+                resultTextarea.readOnly = true;
+
+                listItem.appendChild(document.createElement("br"));
+                listItem.appendChild(checkButton);
+                listItem.appendChild(document.createElement("br"));
+                listItem.appendChild(resultTextarea);
+
+                trackingList.appendChild(listItem);
+            });
+        }
+
+        async function checkStatus(id) {
+            try {
+                const response = await fetch(`/api/v1/images/classify/${id}`, {
+                    method: "GET",
+                });
+                const result = await response.json();
+
+                const listItem = Array.from(document.getElementById("trackingList").children).find(
+                    (li) => li.textContent.includes(id)
+                );
+                const resultTextarea = listItem.querySelector("textarea");
+                resultTextarea.textContent = JSON.stringify(result, null, 2);
+
+                if (result.status && result.status.msg === "completed") {
+                    alert(`Inference ${id} completed!`);
+                }
+            } catch (error) {
+                alert(`Error checking status for ${id}: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  zenko_object_storage:
+    image: zenko/cloudserver:latest
+    container_name: zenko_s3
+    restart: always
+    ports:
+      - "48000:8000"
+      - "49990:9990"
+      - "49991:9991"
+    environment:
+      SCALITY_ACCESS_KEY_ID: ${SCALITY_ACCESS_KEY_ID}
+      SCALITY_SECRET_ACCESS_KEY: ${SCALITY_SECRET_ACCESS_KEY}
+      REMOTE_MANAGEMENT_DISABLE: ${REMOTE_MANAGEMENT_DISABLE}
+      S3DATAPATH: /data
+      S3METADATAPATH: /metadata
+    volumes:
+      - ./docker/zenko/zenko_volume:/data
+      - ./docker/zenko/zenko_meta:/metadata
+    networks:
+      - kpep
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "46379:6379"
+    environment:
+      REDIS_PASSWORD: ${MY_REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${MY_REDIS_PASSWORD}"]
+    volumes:
+      - ./docker/redis/redis_volume:/data
+    networks:
+      - kpep
+
+  postgres_rdbms:
+    image: postgres:13.16
+    container_name: postgres_db
+    restart: always
+    ports:
+      - "45432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./docker/postgresql/postgre_volume:/var/lib/postgresql/data
+    networks:
+      - kpep
+
+volumes:
+  zenko_volume:
+    driver: local
+  zenko_meta:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  kpep:
+    driver: bridge
