@@ -1,6 +1,9 @@
 # cifar100-fastapi-clean-architecture
 cifar100 image classification backend with fastapi **clean architecture**
 
+## Scenario
+![image](https://github.com/user-attachments/assets/12ec6cfb-ef7f-4074-83cc-fc3a9fcd7ade)
+
 ## Single-Image-File(JPG,PNG,JPEG ...) Classification
 ![SINGLE-ONNX](https://github.com/user-attachments/assets/f1c35d48-5c1a-4fa0-8f36-dbc1d0785219)
 
