@@ -44,7 +44,7 @@ from app.infrastructure.Queue import IQueue
 from app.infrastructure.Environment import get_environment_variables
 
 
-class RedisQueue:
+class RedisQueue(IQueue):
     def __init__(self):
         self.env = get_environment_variables()
         self.client = redis.Redis(
